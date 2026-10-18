@@ -278,5 +278,40 @@ footer {
   .post {
     padding: 16px;
   }
+.reaction-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.reaction-button {
+  background: #eaf3ff;
+  color: #0756b8;
+  border: 1px solid #d3e5ff;
+  border-radius: 20px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.reaction-button:hover,
+.reaction-button.selected-reaction,
+.reaction-button[aria-pressed="true"] {
+  background: #1877f2;
+  color: #ffffff;
+}
+
+.reaction-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.reaction-count {
+  background: #f0f2f5;
+  padding: 5px 9px;
+  border-radius: 14px;
+  font-size: 14px;
   }
-  
+    
