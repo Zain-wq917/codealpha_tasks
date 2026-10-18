@@ -20,13 +20,8 @@ const reactions = [
 function makeElement(tag, className = "", text = "") {
   const element = document.createElement(tag);
 
-  if (className) {
-    element.className = className;
-  }
-
-  if (text !== "") {
-    element.textContent = text;
-  }
+  if (className) element.className = className;
+  if (text !== "") element.textContent = text;
 
   return element;
 }
@@ -35,7 +30,7 @@ function loadPosts() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     return Array.isArray(saved) ? saved : [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -45,22 +40,11 @@ let posts = loadPosts();
 function savePosts() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-  } catch (error) {
+  } catch {
     if (formMessage) {
-      formMessage.textContent =
-        "Posts save nahi ho sake. Browser storage check karein.";
+      formMessage.textContent = "Posts save nahi ho sake.";
     }
   }
-}
-
-function formatDate(dateValue) {
-  const date = new Date(dateValue);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Just now";
-  }
-
-  return date.toLocaleString();
 }
 
 function getReactionData(post) {
@@ -79,16 +63,14 @@ function getReactionData(post) {
 
 function changeReaction(post, reactionName) {
   const counts = getReactionData(post);
-  const previousReaction = post.userReaction || null;
+  const previous = post.userReaction || null;
 
-  // Same reaction dobara dabane par reaction remove ho jayega.
-  if (previousReaction === reactionName) {
+  if (previous === reactionName) {
     counts[reactionName] = Math.max(0, counts[reactionName] - 1);
     post.userReaction = null;
   } else {
-    // Pehli reaction ko remove karein agar user reaction badal raha ho.
-    if (previousReaction && counts[previousReaction] > 0) {
-      counts[previousReaction]--;
+    if (previous && counts[previous] > 0) {
+      counts[previous]--;
     }
 
     counts[reactionName]++;
@@ -105,11 +87,18 @@ function createPostCard(post) {
   const header = makeElement("div", "post-header");
   const avatar = makeElement("div", "avatar", "B");
   const userInfo = makeElement("div");
-  const userName = makeElement("strong", "", post.author || "Blue Sky User");
+  const userName = makeElement(
+    "strong",
+    "",
+    post.author || "Blue Sky User"
+  );
+
   const postDate = makeElement(
     "small",
     "post-date",
-    formatDate(post.createdAt)
+    post.createdAt
+      ? new Date(post.createdAt).toLocaleString()
+      : "Just now"
   );
 
   userInfo.append(userName, postDate);
@@ -120,24 +109,22 @@ function createPostCard(post) {
 
   if (post.image) {
     try {
-      const imageUrl = new URL(post.image);
+      const url = new URL(post.image);
 
-      if (imageUrl.protocol === "https:" || imageUrl.protocol === "http:") {
+      if (url.protocol === "https:" || url.protocol === "http:") {
         const image = makeElement("img", "post-image");
-        image.src = imageUrl.href;
+        image.src = url.href;
         image.alt = "Post image";
         image.loading = "lazy";
-        image.referrerPolicy = "no-referrer";
-
         image.addEventListener("error", () => image.remove());
         card.append(image);
       }
-    } catch (error) {
-      // Invalid image URLs are ignored.
+    } catch {
+      // Invalid image URL ko ignore karein.
     }
   }
 
-  // Reactions: Like, Love, Haha, Wow, Sad, Angry
+  // Reaction buttons
   const reactionArea = makeElement("div", "reaction-area");
   const reactionCounts = makeElement("div", "reaction-counts");
   const counts = getReactionData(post);
@@ -150,12 +137,11 @@ function createPostCard(post) {
     );
 
     button.type = "button";
-    button.setAttribute(
-      "aria-pressed",
-      String(post.userReaction === reaction.name)
-    );
 
-    if (post.userReaction === reaction.name) {
+    const selected = post.userReaction === reaction.name;
+    button.setAttribute("aria-pressed", String(selected));
+
+    if (selected) {
       button.classList.add("selected-reaction");
     }
 
@@ -179,34 +165,37 @@ function createPostCard(post) {
   card.append(reactionArea, reactionCounts);
 
   // Comments
+  if (!Array.isArray(post.comments)) {
+    post.comments = [];
+  }
+
   const actions = makeElement("div", "post-actions");
   const commentButton = makeElement("button", "", "💬 Comments");
   commentButton.type = "button";
 
   const commentsArea = makeElement("div", "comment-list");
 
-  if (!Array.isArray(post.comments)) {
-    post.comments = [];
-  }
-
   post.comments.forEach((comment) => {
-    commentsArea.append(
-      makeElement("p", "comment", `💬 ${comment}`)
-    );
+    commentsArea.append(makeElement("p", "comment", `💬 ${comment}`));
   });
 
   const commentForm = makeElement("form", "comment-form");
   const commentInput = makeElement("input");
+
   commentInput.type = "text";
   commentInput.placeholder = "Write a comment...";
   commentInput.maxLength = 500;
-  commentInput.setAttribute("aria-label", "Write a comment");
   commentInput.required = true;
+  commentInput.setAttribute("aria-label", "Write a comment");
 
   const commentSubmit = makeElement("button", "", "Comment");
   commentSubmit.type = "submit";
 
   commentForm.append(commentInput, commentSubmit);
+  actions.append(commentButton);
+
+  commentForm.hidden = true;
+  commentsArea.hidden = true;
 
   commentButton.addEventListener("click", () => {
     commentForm.hidden = !commentForm.hidden;
@@ -217,7 +206,6 @@ function createPostCard(post) {
     event.preventDefault();
 
     const text = commentInput.value.trim();
-
     if (!text) return;
 
     post.comments.push(text);
@@ -225,10 +213,6 @@ function createPostCard(post) {
     renderPosts(searchInput ? searchInput.value : "");
   });
 
-  commentForm.hidden = true;
-  commentsArea.hidden = true;
-
-  actions.append(commentButton);
   card.append(actions, commentsArea, commentForm);
 
   return card;
@@ -241,10 +225,9 @@ function renderPosts(searchTerm = "") {
 
   const query = searchTerm.trim().toLowerCase();
 
-  const filteredPosts = posts.filter((post) => {
-    const text = (post.text || "").toLowerCase();
-    return text.includes(query);
-  });
+  const filteredPosts = posts.filter((post) =>
+    (post.text || "").toLowerCase().includes(query)
+  );
 
   if (filteredPosts.length === 0) {
     feedList.append(
@@ -262,6 +245,7 @@ function renderPosts(searchTerm = "") {
   });
 }
 
+// Publish new post
 if (postForm) {
   postForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -270,22 +254,19 @@ if (postForm) {
     const image = postImage.value.trim();
 
     if (!text) {
-      formMessage.textContent = "Post likhein, phir publish karein.";
+      formMessage.textContent = "Pehle post likhein.";
       return;
     }
 
     if (image) {
       try {
-        const imageUrl = new URL(image);
+        const url = new URL(image);
 
-        if (
-          imageUrl.protocol !== "https:" &&
-          imageUrl.protocol !== "http:"
-        ) {
-          formMessage.textContent = "Image ka valid HTTP/HTTPS URL dein.";
+        if (url.protocol !== "https:" && url.protocol !== "http:") {
+          formMessage.textContent = "Valid image URL enter karein.";
           return;
         }
-      } catch (error) {
+      } catch {
         formMessage.textContent = "Image URL theek nahi hai.";
         return;
       }
@@ -311,19 +292,23 @@ if (postForm) {
 
     posts.unshift(newPost);
     savePosts();
-
     postForm.reset();
-    formMessage.textContent = "Post publish ho gayi! 🎉";
+
+    if (formMessage) {
+      formMessage.textContent = "Post publish ho gayi! 🎉";
+    }
 
     renderPosts(searchInput ? searchInput.value : "");
   });
 }
 
+// Search posts
 if (searchInput) {
   searchInput.addEventListener("input", () => {
     renderPosts(searchInput.value);
   });
 }
 
+// Display saved posts
 renderPosts();
-    
+  
