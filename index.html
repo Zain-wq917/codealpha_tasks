@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Blue Sky is a social platform to share posts and connect with friends.">
+  <title>Blue Sky | Social Media</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="index.html" class="logo">🔵 Blue Sky</a>
+    <input id="searchInput" type="search" placeholder="Search posts..." aria-label="Search posts">
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#create">Create Post</a>
+      <a href="#profile">Profile</a>
+    </nav>
+  </header>
+
+  <main class="layout" id="home">
+    <aside class="sidebar">
+      <h2>Blue Sky</h2>
+      <a href="#home">🏠 Home</a>
+      <a href="#create">✍️ Create Post</a>
+      <a href="#profile">👤 My Profile</a>
+      <a href="#feed">📰 News Feed</a>
+      <p class="muted">Connect with your world.</p>
+    </aside>
+
+    <div class="content">
+      <section class="welcome">
+        <h1>Welcome to Blue Sky! 🔵</h1>
+        <p>Share your thoughts and connect with friends.</p>
+      </section>
+
+      <section class="card" id="create">
+        <h2>Create a Post</h2>
+        <form id="postForm">
+          <label for="postText">What's on your mind?</label>
+          <textarea id="postText" maxlength="2000" rows="4" placeholder="Share something with your friends..." required></textarea>
+          <label for="postImage">Image URL (optional)</label>
+          <input id="postImage" type="url" placeholder="https://example.com/photo.jpg">
+          <button type="submit">Publish Post</button>
+          <p id="formMessage" role="status"></p>
+        </form>
+      </section>
+
+      <section id="feed">
+        <h2>Latest Posts</h2>
+        <div id="feedList" aria-live="polite">
+          <p class="muted">Your posts will appear here.</p>
+        </div>
+      </section>
+
+      <section class="card" id="profile">
+        <h2>My Profile</h2>
+        <p><strong>Name:</strong> Blue Sky User</p>
+        <p>Welcome to your social community!</p>
+        <p class="muted">User accounts and profile editing will be connected to the backend in a later step.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 Blue Sky Social. Built for learning.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+    </html>
+      
